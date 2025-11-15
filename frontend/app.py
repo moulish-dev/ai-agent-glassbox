@@ -1,3 +1,12 @@
+import os
+import sys
+
+# Ensure project root is on sys.path so we can import `analysis` and `backend`
+CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(CURRENT_DIR)
+if PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, PROJECT_ROOT)
+
 import streamlit as st
 import pandas as pd
 from analysis.traces_loader import load_traces
@@ -33,7 +42,7 @@ df = pd.DataFrame([
     }
     for s in steps
 ])
-st.dataframe(df, use_container_width=True)
+st.dataframe(df, width="stretch")
 
 # Memory timeline – show diff-ish view
 st.subheader("Memory Timeline")
@@ -72,3 +81,11 @@ st.write(metrics)
 st.bar_chart(df_all["node"].value_counts())
 if df_all["tool"].notna().any():
     st.bar_chart(df_all["tool"].value_counts(dropna=True))
+
+
+from analysis.memory_analysis import compute_memory_changes_for_trace
+
+memory_diffs = compute_memory_changes_for_trace(trace)
+current_diff = memory_diffs[selected_step_idx - 1]["diff"]
+st.subheader("Memory Diff at this step")
+st.json(current_diff)

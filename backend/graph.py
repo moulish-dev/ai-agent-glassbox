@@ -1,13 +1,15 @@
+# backend/graph.py
+
 from typing import Dict, Any
 from .models import AgentState, StepLog
 from .agent import web_search_tool, summarize_tool
+from .llm import ollama_llm  # 👈 add this
 
 # node 1: plan
-def plan_node(state: AgentState, llm) -> AgentState:
+def plan_node(state: AgentState) -> AgentState:
     memory_before = state.memory.copy()
-    # Call LLM to decide plan
     prompt = f"You are a research agent. User query: {state.user_query}. Decide if you need web search."
-    plan = llm(prompt)
+    plan = ollama_llm(prompt)  # 👈 use mock LLM
 
     state.memory["plan"] = plan
 
@@ -24,8 +26,7 @@ def plan_node(state: AgentState, llm) -> AgentState:
     state.steps.append(step)
     return state
 
-# node 2: maybe call tool
-def research_node(state: AgentState, llm) -> AgentState:
+def research_node(state: AgentState) -> AgentState:
     memory_before = state.memory.copy()
 
     if "search" in state.memory.get("plan", "").lower():
@@ -58,13 +59,12 @@ def research_node(state: AgentState, llm) -> AgentState:
         state.steps.append(step)
     return state
 
-# node 3: final answer
-def answer_node(state: AgentState, llm) -> AgentState:
+def answer_node(state: AgentState) -> AgentState:
     memory_before = state.memory.copy()
 
     context = state.memory.get("research_raw", "No external research was used.")
     prompt = f"User query: {state.user_query}\nContext: {context}\nCompose a helpful answer."
-    answer = llm(prompt)
+    answer = ollama_llm(prompt)  # 👈 use mock LLM
     state.final_answer = answer
 
     step = StepLog(
@@ -80,20 +80,12 @@ def answer_node(state: AgentState, llm) -> AgentState:
     state.steps.append(step)
     return state
 
-# wrapper
-def run_agent(user_query: str, llm) -> AgentState:
+def run_agent(user_query: str) -> AgentState:
     state = AgentState(user_query=user_query)
-    state = plan_node(state, llm)
-    state = research_node(state, llm)
-    state = answer_node(state, llm)
+    state = plan_node(state)
+    state = research_node(state)
+    state = answer_node(state)
     return state
 
 
-from analysis.traces_loader import save_trace
 
-state = run_agent("Explain quantum computing to a beginner", llm)
-save_trace(state, "trace_001_quantum_intro")
-
-def plan_node(state: AgentState, llm, config) -> AgentState:
-    # Maybe later you use past behavior metrics to adjust config.enable_search_threshold
-    ...
