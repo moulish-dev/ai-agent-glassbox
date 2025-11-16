@@ -18,4 +18,4 @@ def main(query):
 
 
 if __name__ == "__main__":
-    main("what command to use for sopying file in linux?")
+    main("Tell me about the company Holistic AI")

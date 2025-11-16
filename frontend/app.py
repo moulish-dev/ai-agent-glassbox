@@ -89,15 +89,6 @@ st.bar_chart(df_all["node"].value_counts())
 if df_all["tool"].notna().any():
     st.bar_chart(df_all["tool"].value_counts(dropna=True))
 
-st.subheader("Memory Changes at This Step")
-
-mem_diff = timeline[selected_step_idx - 1]["diff"]
-
-if mem_diff:
-    st.json(mem_diff)
-else:
-    st.write("No memory changes at this step.")
-
 
 st.markdown(
     "> ⚠️ **Disclaimer:** This system is an *educational investment research assistant*. "
