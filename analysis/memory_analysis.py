@@ -2,55 +2,40 @@
 
 from typing import Dict, Any, List
 
+def dict_diff(before: Dict[str, Any], after: Dict[str, Any]) -> Dict[str, Any]:
+    """Return only the keys that changed between before and after."""
+    diff = {}
 
-def diff_memory(before: Dict[str, Any], after: Dict[str, Any]) -> Dict[str, Any]:
+    # keys changed or added
+    for key in after:
+        if key not in before or before[key] != after[key]:
+            diff[key] = {"before": before.get(key), "after": after[key]}
+
+    # keys removed
+    for key in before:
+        if key not in after:
+            diff[key] = {"before": before[key], "after": None}
+
+    return diff
+
+
+def compute_memory_timeline(trace: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
-    Compute a simple diff between two memory snapshots.
-    Returns dict with keys: added, removed, changed, unchanged.
+    For each step, compute memory diff.
+    Returns list of: { step_id, node, diff }
     """
-    before_keys = set(before.keys())
-    after_keys = set(after.keys())
+    timeline = []
 
-    added_keys = after_keys - before_keys
-    removed_keys = before_keys - after_keys
-    common_keys = before_keys & after_keys
+    for step in trace["steps"]:
+        before = step["memory_before"]
+        after = step["memory_after"]
 
-    changed = {}
-    unchanged = {}
-    for k in common_keys:
-        if before[k] != after[k]:
-            changed[k] = {"before": before[k], "after": after[k]}
-        else:
-            unchanged[k] = before[k]
+        diff = dict_diff(before, after)
 
-    return {
-        "added": {k: after[k] for k in added_keys},
-        "removed": {k: before[k] for k in removed_keys},
-        "changed": changed,
-        "unchanged": unchanged,
-    }
+        timeline.append({
+            "step_id": step["step_id"],
+            "node": step["node"],
+            "diff": diff,
+        })
 
-
-def compute_memory_changes_for_trace(trace: dict) -> List[Dict[str, Any]]:
-    """
-    For a full trace (one AgentState as dict), compute memory diffs per step.
-    Returns a list with one entry per step:
-    {
-      "step_id": ...,
-      "node": ...,
-      "diff": {added, removed, changed, unchanged}
-    }
-    """
-    results = []
-    for step in trace.get("steps", []):
-        before = step.get("memory_before", {}) or {}
-        after = step.get("memory_after", {}) or {}
-        diff = diff_memory(before, after)
-        results.append(
-            {
-                "step_id": step.get("step_id"),
-                "node": step.get("node"),
-                "diff": diff,
-            }
-        )
-    return results
+    return timeline

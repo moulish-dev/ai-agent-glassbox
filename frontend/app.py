@@ -44,6 +44,11 @@ df = pd.DataFrame([
 ])
 st.dataframe(df, width="stretch")
 
+from analysis.memory_analysis import compute_memory_timeline
+
+timeline = compute_memory_timeline(trace)
+
+
 # Memory timeline – show diff-ish view
 st.subheader("Memory Timeline")
 
@@ -82,10 +87,11 @@ st.bar_chart(df_all["node"].value_counts())
 if df_all["tool"].notna().any():
     st.bar_chart(df_all["tool"].value_counts(dropna=True))
 
+st.subheader("Memory Changes at This Step")
 
-from analysis.memory_analysis import compute_memory_changes_for_trace
+mem_diff = timeline[selected_step_idx - 1]["diff"]
 
-memory_diffs = compute_memory_changes_for_trace(trace)
-current_diff = memory_diffs[selected_step_idx - 1]["diff"]
-st.subheader("Memory Diff at this step")
-st.json(current_diff)
+if mem_diff:
+    st.json(mem_diff)
+else:
+    st.write("No memory changes at this step.")
