@@ -2,16 +2,18 @@ import requests
 import os
 from valyu import Valyu
 from dotenv import load_dotenv, dotenv_values
+from langsmith.run_helpers import traceable
 
 load_dotenv()
-VALYU_API_KEY = os.get_env("VALYU_API_KEY")
+VALYU_API_KEY = os.getenv("VALYU_API_KEY")
 valyu = Valyu(api_key=VALYU_API_KEY)
 
+@traceable(name="web_search_tool")
 def web_search_tool(query: str) -> str:
-
+    finance_query = f"{query} -- extensive company or investment research and also stock OR ETF OR earnings OR financial results"
     # Valyu DeepSearch API
     response = valyu.search(
-        query
+        finance_query
     )
     content=""
     # Access results
@@ -22,8 +24,9 @@ def web_search_tool(query: str) -> str:
         # print(f"Content: {result.content}")
 
     # Replace with real search API if you want
-    return f"[SEARCH RESULTS for: {query}] ---> {content}"
+    return f"[FINANCE SEARCH RESULTS for: {query}] ---> {content}"
 
+@traceable(name="summarizing_tool")
 def summarize_tool(text: str) -> str:
 
     response = valyu.answer(

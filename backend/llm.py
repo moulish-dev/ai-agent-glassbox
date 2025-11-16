@@ -1,29 +1,33 @@
 # backend/llm.py
+import os
+from langsmith import traceable
+import google.generativeai as genai
 
-import requests
+# Load API key
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+if not GEMINI_API_KEY:
+    raise ValueError("GEMINI_API_KEY missing in .env")
 
-OLLAMA_URL = "http://localhost:11434/api/generate"
-DEFAULT_MODEL = "gemma3:1b"  # change to whatever model you use, e.g. "qwen2.5", "deepseek-r1", etc.
+genai.configure(api_key=GEMINI_API_KEY)
 
-def ollama_llm(prompt: str, model: str = DEFAULT_MODEL) -> str:
+# pick your model; gemini-1.5-flash is fast + cheap
+DEFAULT_MODEL = "gemini-2.5-flash-lite"
+
+
+@traceable(name="gemini_llm", run_type="llm")
+def gemini_llm(prompt: str, model: str = DEFAULT_MODEL) -> str:
     """
-    Call a local Ollama model and return the full response text.
-    Requires:
-      - Ollama running locally (ollama serve)
-      - The model to be pulled.
+    Calls the Google Gemini model and returns a plain string.
+    LangSmith will capture prompt + output + timing automatically.
     """
-    payload = {
-        "model": model,
-        "prompt": prompt,
-        "stream": False,   # easier for now – no streaming
-    }
     try:
-        resp = requests.post(OLLAMA_URL, json=payload, timeout=60)
-        resp.raise_for_status()
+        model_obj = genai.GenerativeModel(model)
+        response = model_obj.generate_content(prompt)
     except Exception as e:
-        # Fallback so the rest of the pipeline doesn’t crash
-        return f"[OLLAMA ERROR] {e} | PROMPT: {prompt[:200]}"
-    
-    data = resp.json()
-    # Ollama returns: {"model": "...", "created_at": "...", "response": "...", ...}
-    return data.get("response", "")
+        raise RuntimeError(f"Gemini API error: {e}") from e
+
+    # Extract text safely
+    if not response or not hasattr(response, "text"):
+        raise RuntimeError("Gemini returned empty response or invalid structure.")
+
+    return response.text

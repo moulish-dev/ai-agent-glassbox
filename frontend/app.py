@@ -13,7 +13,9 @@ from analysis.traces_loader import load_traces
 
 st.set_page_config(page_title="GlassMind Navigator", layout="wide")
 
-st.title("GlassMind Navigator – Agent Trajectory Explorer")
+st.title("GlassMind Navigator – Investment Research Agent (Glass Box)")
+st.caption("Fully observable investment research assistant – every decision, tool call, and memory update is visible.")
+
 
 traces = load_traces()
 if not traces:
@@ -95,3 +97,10 @@ if mem_diff:
     st.json(mem_diff)
 else:
     st.write("No memory changes at this step.")
+
+
+st.markdown(
+    "> ⚠️ **Disclaimer:** This system is an *educational investment research assistant*. "
+    "It does **not** provide financial advice. "
+    "Do your own research and consult a qualified professional before making investment decisions."
+)
