@@ -10,7 +10,7 @@ valyu = Valyu(api_key=VALYU_API_KEY)
 
 @traceable(name="web_search_tool")
 def web_search_tool(query: str) -> str:
-    finance_query = f"{query} -- extensive company or investment research and also stock OR ETF OR earnings OR financial results"
+    finance_query = f"{query} -- extensive company or investment research and also stock OR ETF OR earnings OR financial results or about it"
     # Valyu DeepSearch API
     response = valyu.search(
         finance_query
@@ -23,7 +23,6 @@ def web_search_tool(query: str) -> str:
         # print(f"URL: {result.url}")
         # print(f"Content: {result.content}")
 
-    # Replace with real search API if you want
     return f"[FINANCE SEARCH RESULTS for: {query}] ---> {content}"
 
 @traceable(name="summarizing_tool")
